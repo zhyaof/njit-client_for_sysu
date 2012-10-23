@@ -27,4 +27,4 @@ RedHat/Fedora下命令格式为：<br/>
 su -c "njit-client user_name password"<br/>
 说明
 -----
-本项目基于刘群的njit-client开发，项目地址：https://github.com/liuqun/njit8021xclient 感谢@狼王弱爆了 为我们改写了其md5。md5参考自Maple的OH3C。
+本项目基于刘群的njit-client开发，项目地址：https://github.com/liuqun/njit8021xclient 感谢@狼王弱爆了 为我们改写了其md5。md5参考自Maple的YaH3C。
