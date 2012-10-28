@@ -195,8 +195,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = src
-dist_doc_DATA = ReadMe.html Install.html Documents.html \
-	License/gpl-3.0.txt
+dist_doc_DATA = README.md
 all: all-recursive
 
 .SUFFIXES:
