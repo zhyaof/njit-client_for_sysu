@@ -715,7 +715,11 @@ sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
 includedir='${prefix}/include'
+<<<<<<< HEAD
 oldincludedir='${prefix}/usr/include'
+=======
+oldincludedir='/usr/include'
+>>>>>>> e8386029915de40fb94d407b447712624b61a40e
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
 infodir='${datarootdir}/info'
 htmldir='${docdir}'
@@ -1260,7 +1264,11 @@ Fine tuning of the installation directories:
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
+<<<<<<< HEAD
   --oldincludedir=DIR     C header files for non-gcc [PREFIX/usr/include]
+=======
+  --oldincludedir=DIR     C header files for non-gcc [/usr/include]
+>>>>>>> e8386029915de40fb94d407b447712624b61a40e
   --datarootdir=DIR       read-only arch.-independent data root [PREFIX/share]
   --datadir=DIR           read-only architecture-independent data [DATAROOTDIR]
   --infodir=DIR           info documentation [DATAROOTDIR/info]
