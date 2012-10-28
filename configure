@@ -672,11 +672,7 @@ sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
 includedir='${prefix}/include'
-<<<<<<< HEAD
 oldincludedir='${prefix}/usr/include'
-=======
-oldincludedir='/usr/include'
->>>>>>> e8386029915de40fb94d407b447712624b61a40e
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
 infodir='${datarootdir}/info'
 htmldir='${docdir}'
