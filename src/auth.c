@@ -3,6 +3,7 @@
  * 注：核心函数为Authentication()，由该函数执行801.1X认证
  */
 
+
 // FOR CCNU 2012-10-9 Renew MD-5 For iNode PC 5.0 (E0101);
 
 int Authentication(const char *UserName, const char *Password, const char *DeviceName);
@@ -14,6 +15,7 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 #include <assert.h>
 #include <time.h>
 #include <stdbool.h>
+#include <iconv.h>
 
 #include <pcap.h>
 
@@ -200,7 +202,8 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 			while (pcap_next_ex(adhandle, &header, &captured) != 1)
 			{
 				DPRINTF("."); // 若捕获失败，则等1秒后重试
-				sleep(1);     // 直到成功捕获到一个数据包后再跳出
+				sleep(1);     
+                goto START_AUTHENTICATION;//出于快速断线重连考虑,捕获失败直接重新发起认证 by chliny
 				// NOTE: 这里没有检查网线是否已被拔下或插口接触不良
 			}
 
@@ -282,8 +285,24 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 			}
 			else
 			{
-				DPRINTF("[%d] Server: (H3C Data)\n", captured[19]);
-				// TODO: 这里没有处理华为自定义数据包，主要是客户端信息
+                uint8_t msgsize = captured[21];
+                char *H3Cmsg = (char*) &captured[26];
+                DPRINTF("[%d] Server: ", captured[19]);
+                iconv_t cd = iconv_open("utf-8","gbk");
+                
+                size_t h3clen = msgsize;
+                size_t translen = h3clen *4;
+                char *transMsg = (char*)malloc(translen * sizeof(char));
+                memset(transMsg,0,translen);
+                char *outputMsg = transMsg;
+
+                if(iconv(cd,&H3Cmsg,&h3clen,&transMsg,&translen) != -1){
+                    outputMsg[translen] = '\0';
+                    fprintf(stdout, "%s\n", outputMsg);
+                }
+                else
+                    fprintf(stdout, "%s\n", H3Cmsg);
+                iconv_close(cd);
 			}
 		}
 	}
