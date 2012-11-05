@@ -3,7 +3,6 @@
  * 注：核心函数为Authentication()，由该函数执行801.1X认证
  */
 
-
 // FOR CCNU 2012-10-9 Renew MD-5 For iNode PC 5.0 (E0101);
 
 int Authentication(const char *UserName, const char *Password, const char *DeviceName);
@@ -199,11 +198,14 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 		for (;;)
 		{
 			// 调用pcap_next_ex()函数捕获数据包
+            int sleepTime = 0;
 			while (pcap_next_ex(adhandle, &header, &captured) != 1)
 			{
 				DPRINTF("."); // 若捕获失败，则等1秒后重试
-				sleep(1);     
-                goto START_AUTHENTICATION;//出于快速断线重连考虑,捕获失败直接重新发起认证 by chliny
+				sleep(1);
+                ++sleepTime;
+                if(sleepTime >= 3)
+                    goto START_AUTHENTICATION;//三次捕获失败则重新认证
 				// NOTE: 这里没有检查网线是否已被拔下或插口接触不良
 			}
 
