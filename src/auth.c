@@ -14,7 +14,7 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 #include <assert.h>
 #include <time.h>
 #include <stdbool.h>
-#include <iconv.h>
+#include <iconv.h>//转换编码所需
 
 #include <pcap.h>
 
@@ -290,14 +290,15 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
                 uint8_t msgsize = captured[21];
                 char *H3Cmsg = (char*) &captured[26];
                 DPRINTF("[%d] Server: ", captured[19]);
+
+                //接收客户端提示文字并转为utf8编码 
                 iconv_t cd = iconv_open("utf-8","gbk");
-                
                 size_t h3clen = msgsize;
                 size_t translen = h3clen *4;
                 char *transMsg = (char*)malloc(translen * sizeof(char));
                 memset(transMsg,0,translen);
                 char *outputMsg = transMsg;
-
+                //若转换成功则输出utf8编码，否则输出原编码
                 if(iconv(cd,&H3Cmsg,&h3clen,&transMsg,&translen) != -1){
                     outputMsg[translen] = '\0';
                     fprintf(stdout, "%s\n", outputMsg);
