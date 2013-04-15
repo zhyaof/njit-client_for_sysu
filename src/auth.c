@@ -98,6 +98,7 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 	char	FilterStr[100];
 	struct bpf_program	fcode;
 	const int DefaultTimeout=60000;//设置接收超时参数，单位ms
+	int h3cdata = 0;
 
 	// NOTE: 这里没有检查网线是否已插好,网线插口可能接触不良
 	
@@ -510,33 +511,53 @@ void SendResponseIdentityUserName(pcap_t *adhandle, const uint8_t request[], con
 			response[22] = (EAP_Type) IDENTITY;	// Type
 			// Type-Data
 			// {
-				i = 23;
-				//response[i++] = 0x15;	  // 上传IP地址
-				//response[i++] = 0x04;	  //
-				//memcpy(response+i, ip, 4);//
-				//i += 4;			  //
-				response[i++] = 0x06;		  // 携带版本号
-				response[i++] = 0x07;		  //
-				//FillBase64Area((char*)response+i);//for zhyaof
-				memcpy(response+i, "bjQ7SE8BZ3MqHhs3clMregcDY3Y=", sizeof("bjQ7SE8BZ3MqHhs3clMregcDY3Y="));
-				i += 28;			  //
-			    response[i++] = ' '; // 两个空格符
-				response[i++] = ' '; //
+				response[23] = 0X06;  // 携带版本号
+				response[24] = 0X07;
+				response[25] = 0X62;
+				response[26] = 0X6a;
+				response[27] = 0X51;
+				response[28] = 0X37;
+				response[29] = 0X53;
+				response[30] = 0X45;
+				response[31] = 0X38;
+				response[32] = 0X42;
+				response[33] = 0X5a;
+				response[34] = 0X33;
+				response[35] = 0X4d;
+				response[36] = 0X71;
+				response[37] = 0X48;
+				response[38] = 0X68;
+				response[39] = 0X73;
+				response[40] = 0X33;
+				response[41] = 0X63;
+				response[42] = 0X6c;
+				response[43] = 0X4d;
+				response[44] = 0X72;
+				response[45] = 0X65;
+				response[46] = 0X67;
+				response[47] = 0X63;
+				response[48] = 0X44;
+				response[49] = 0X59;
+				response[50] = 0X33;
+				response[51] = 0X59;
+				response[52] = 0X3d;
+				response[53] = 0X20;	// 两个空格符
+				response[54] = 0X20;
+				
+				//memcpy(response+i, "bjQ7SE8BZ3MqHhs3clMregcDY3Y=", sizeof("bjQ7SE8BZ3MqHhs3clMregcDY3Y="));
 				usernamelen = strlen(username); //末尾添加用户名
 				memcpy(response+i, username, usernamelen);
-				i += usernamelen;
-				assert(i <= sizeof(response));
 			// }
 		// }
 	// }
 	
 	// 补填前面留空的两处Length
-	eaplen = htons(i-18);
+	eaplen = htons(usernamelen + 0x25);
 	memcpy(response+16, &eaplen, sizeof(eaplen));
 	memcpy(response+20, &eaplen, sizeof(eaplen));
 
 	// 发送
-	pcap_sendpacket(adhandle, response, i);
+	pcap_sendpacket(adhandle, response, 55+usernamelen);
 	return;
 }
 
@@ -611,9 +632,8 @@ void SendResponsePassword(pcap_t *handle, const uint8_t request[], const uint8_t
 	assert((EAP_Code)request[18] == REQUEST);
 	assert((EAP_Type)request[22] == ALLOCATED);
 
-	//sizeof?strlen?
 	usernamelen = strlen(username);
-	passwordlen = sizeof(passwd);
+	passwordlen = strlen(passwd);
 	eaplen = htons(6+usernamelen+passwordlen);
 	packetlen =24+usernamelen+passwordlen; //14+4+22+usernamelen; // ethhdr+EAPOL+EAP+usernamelen
 
@@ -633,11 +653,9 @@ void SendResponsePassword(pcap_t *handle, const uint8_t request[], const uint8_t
 		response[20] = response[16];	// Length
 		response[21] = response[17];	//
 		response[22] = (EAP_Type) ALLOCATED;	// Type
-		response[23] = 8;		// Value-Size: 16 Bytes
+		response[23] = passwordlen;		// Value-Size: 16 Bytes
 		memcpy(response+24, passwd, passwordlen);
 		memcpy(response+24+passwordlen+1, username, usernamelen);//?????
-		
-		// }
 	// }
 
 	pcap_sendpacket(handle, response, packetlen);
