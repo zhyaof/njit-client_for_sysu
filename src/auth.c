@@ -511,38 +511,13 @@ void SendResponseIdentityUserName(pcap_t *adhandle, const uint8_t request[], con
 			response[22] = (EAP_Type) IDENTITY;	// Type
 			// Type-Data
 			// {
-				response[23] = 0X06;  // 携带版本号
-				response[24] = 0X07;
-				response[25] = 0X62;
-				response[26] = 0X6a;
-				response[27] = 0X51;
-				response[28] = 0X37;
-				response[29] = 0X53;
-				response[30] = 0X45;
-				response[31] = 0X38;
-				response[32] = 0X42;
-				response[33] = 0X5a;
-				response[34] = 0X33;
-				response[35] = 0X4d;
-				response[36] = 0X71;
-				response[37] = 0X48;
-				response[38] = 0X68;
-				response[39] = 0X73;
-				response[40] = 0X33;
-				response[41] = 0X63;
-				response[42] = 0X6c;
-				response[43] = 0X4d;
-				response[44] = 0X72;
-				response[45] = 0X65;
-				response[46] = 0X67;
-				response[47] = 0X63;
-				response[48] = 0X44;
-				response[49] = 0X59;
-				response[50] = 0X33;
-				response[51] = 0X59;
-				response[52] = 0X3d;
-				response[53] = 0X20;	// 两个空格符
-				response[54] = 0X20;
+				i = 23;
+				response[i++] = 0x06;      // 携带版本号
+				response[i++] = 0x07;      //
+				memcpy(response+i, "bjQ7SE8BZ3MqHhs3clMregcDY3Y=", sizeof("bjQ7SE8BZ3MqHhs3clMregcDY3Y="));
+				i += 28;        //
+				response[i++] = ' '; // 两个空格符
+				response[i++] = ' '; //
 				
 				//memcpy(response+i, "bjQ7SE8BZ3MqHhs3clMregcDY3Y=", sizeof("bjQ7SE8BZ3MqHhs3clMregcDY3Y="));
 				usernamelen = strlen(username); //末尾添加用户名
