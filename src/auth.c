@@ -14,6 +14,7 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 #include <assert.h>
 #include <time.h>
 #include <stdbool.h>
+#include <iconv.h>//转换编码所需
 
 #include <pcap.h>
 
@@ -97,6 +98,7 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 	char	FilterStr[100];
 	struct bpf_program	fcode;
 	const int DefaultTimeout=60000;//设置接收超时参数，单位ms
+	int h3cdata = 0;
 
 	// NOTE: 这里没有检查网线是否已插好,网线插口可能接触不良
 	
@@ -197,10 +199,14 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 		for (;;)
 		{
 			// 调用pcap_next_ex()函数捕获数据包
+            int sleepTime = 0;
 			while (pcap_next_ex(adhandle, &header, &captured) != 1)
 			{
 				DPRINTF("."); // 若捕获失败，则等1秒后重试
-				sleep(1);     // 直到成功捕获到一个数据包后再跳出
+				sleep(1);
+                ++sleepTime;
+                if(sleepTime >= 3)
+                    goto START_AUTHENTICATION;//三次捕获失败则重新认证
 				// NOTE: 这里没有检查网线是否已被拔下或插口接触不良
 			}
 
@@ -282,8 +288,25 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 			}
 			else
 			{
-				DPRINTF("[%d] Server: (H3C Data)\n", captured[19]);
-				// TODO: 这里没有处理华为自定义数据包，主要是客户端信息
+                uint8_t msgsize = captured[21];
+                char *H3Cmsg = (char*) &captured[26];
+                DPRINTF("[%d] Server: ", captured[19]);
+
+                //接收客户端提示文字并转为utf8编码 
+                iconv_t cd = iconv_open("utf-8","gbk");
+                size_t h3clen = msgsize;
+                size_t translen = h3clen *4;
+                char *transMsg = (char*)malloc(translen * sizeof(char));
+                memset(transMsg,0,translen);
+                char *outputMsg = transMsg;
+                //若转换成功则输出utf8编码，否则输出原编码
+                if(iconv(cd,&H3Cmsg,&h3clen,&transMsg,&translen) != -1){
+                    outputMsg[translen] = '\0';
+                    fprintf(stdout, "%s\n", outputMsg);
+                }
+                else
+                    fprintf(stdout, "%s\n", H3Cmsg);
+                iconv_close(cd);
 			}
 		}
 	}
@@ -489,32 +512,27 @@ void SendResponseIdentityUserName(pcap_t *adhandle, const uint8_t request[], con
 			// Type-Data
 			// {
 				i = 23;
-				//response[i++] = 0x15;	  // 上传IP地址
-				//response[i++] = 0x04;	  //
-				//memcpy(response+i, ip, 4);//
-				//i += 4;			  //
-				response[i++] = 0x06;		  // 携带版本号
-				response[i++] = 0x07;		  //
-				//FillBase64Area((char*)response+i);//for zhyaof
+				response[i++] = 0x06;      // 携带版本号
+				response[i++] = 0x07;      //
 				memcpy(response+i, "bjQ7SE8BZ3MqHhs3clMregcDY3Y=", sizeof("bjQ7SE8BZ3MqHhs3clMregcDY3Y="));
-				i += 28;			  //
-			    response[i++] = ' '; // 两个空格符
+				i += 28;        //
+				response[i++] = ' '; // 两个空格符
 				response[i++] = ' '; //
+				
+				//memcpy(response+i, "bjQ7SE8BZ3MqHhs3clMregcDY3Y=", sizeof("bjQ7SE8BZ3MqHhs3clMregcDY3Y="));
 				usernamelen = strlen(username); //末尾添加用户名
 				memcpy(response+i, username, usernamelen);
-				i += usernamelen;
-				assert(i <= sizeof(response));
 			// }
 		// }
 	// }
 	
 	// 补填前面留空的两处Length
-	eaplen = htons(i-18);
+	eaplen = htons(usernamelen + 0x25);
 	memcpy(response+16, &eaplen, sizeof(eaplen));
 	memcpy(response+20, &eaplen, sizeof(eaplen));
 
 	// 发送
-	pcap_sendpacket(adhandle, response, i);
+	pcap_sendpacket(adhandle, response, 55+usernamelen);
 	return;
 }
 
@@ -589,9 +607,8 @@ void SendResponsePassword(pcap_t *handle, const uint8_t request[], const uint8_t
 	assert((EAP_Code)request[18] == REQUEST);
 	assert((EAP_Type)request[22] == ALLOCATED);
 
-	//sizeof?strlen?
 	usernamelen = strlen(username);
-	passwordlen = sizeof(passwd);
+	passwordlen = strlen(passwd);
 	eaplen = htons(6+usernamelen+passwordlen);
 	packetlen =24+usernamelen+passwordlen; //14+4+22+usernamelen; // ethhdr+EAPOL+EAP+usernamelen
 
@@ -611,11 +628,9 @@ void SendResponsePassword(pcap_t *handle, const uint8_t request[], const uint8_t
 		response[20] = response[16];	// Length
 		response[21] = response[17];	//
 		response[22] = (EAP_Type) ALLOCATED;	// Type
-		response[23] = 8;		// Value-Size: 16 Bytes
+		response[23] = passwordlen;		// Value-Size: 16 Bytes
 		memcpy(response+24, passwd, passwordlen);
 		memcpy(response+24+passwordlen+1, username, usernamelen);//?????
-		
-		// }
 	// }
 
 	pcap_sendpacket(handle, response, packetlen);
