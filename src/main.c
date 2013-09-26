@@ -7,6 +7,8 @@
 #include <stdlib.h>
 
 #include <unistd.h>
+#include <signal.h>
+#include <sys/stat.h>
 
 /* 子函数声明 */
 int Authentication(const char *UserName, const char *Password, const char *DeviceName);
@@ -52,6 +54,19 @@ int main(int argc, char *argv[])
 	}
 	UserName = argv[1];
 	Password = argv[2];
+
+    //守护进程
+    pid_t pid;
+    if (pid = fork())
+        exit(0);//终止父进程
+    //第一子进程
+    setsid();//创建新的进程组，脱离原终端
+    signal(SIGHUP,SIG_IGN); //忽略SIGHUP信号
+    //第二子进程
+    if (pid = fork())
+        exit(0);
+    chdir("/");
+    umask(0);//清除文件掩码
 
 	/* 调用子函数完成802.1X认证 */
 	Authentication(UserName, Password, DeviceName);

@@ -216,10 +216,10 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 				switch ((EAP_Type)captured[22])
 				{
 				 case IDENTITY:
-					DPRINTF("[%d] Server: Request Identity!\n", (EAP_ID)captured[19]);
+					//DPRINTF("[%d] Server: Request Identity!\n", (EAP_ID)captured[19]);
 					GetIpFromDevice(ip, DeviceName);
 					SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
-					DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
+					//DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 					break;
 				 case AVAILABLE:
 					DPRINTF("[%d] Server: Request AVAILABLE!\n", (EAP_ID)captured[19]);
